@@ -2,11 +2,14 @@ import logging
 
 from homeassistant.components.fan import (
     SUPPORT_SET_SPEED,
+    SUPPORT_DIRECTION,
     FanEntity,
     SPEED_OFF,
     SPEED_LOW,
     SPEED_MEDIUM,
     SPEED_HIGH,
+    DIRECTION_FORWARD,
+    DIRECTION_REVERSE,
     DOMAIN
     )
 
@@ -51,6 +54,11 @@ AIRFLOW_TO_INT = {
     ATTR_AIRFLOW_VENT: 0,
     ATTR_AIRFLOW_HEATREC: 1,
     ATTR_AIRFLOW_AIRSUPP: 2,
+}
+
+AIRFLOW_HA_TO_ECOVENT = {
+    DIRECTION_FORWARD: ATTR_AIRFLOW_VENT,
+    DIRECTION_REVERSE: ATTR_AIRFLOW_AIRSUPP,
 }
 
 SET_AIRFLOW_SCHEMA = vol.Schema(
@@ -126,7 +134,7 @@ class EcoventFan(FanEntity):
     @property
     def supported_features(self):
         """Return supported features."""
-        return SUPPORT_SET_SPEED
+        return SUPPORT_SET_SPEED | SUPPORT_DIRECTION
 
     @property
     def speed_list(self):
@@ -172,6 +180,11 @@ class EcoventFan(FanEntity):
         """Set the speed of the fan."""
         fan_speed = SPEED_TO_INT[speed]
         self._fan.set_speed(fan_speed)
+
+    async def async_set_direction(self, direction: str) -> None:
+        """Set the direction of the fan."""
+        airflow = AIRFLOW_TO_INT[AIRFLOW_HA_TO_ECOVENT[direction]]
+        self._fan.set_airflow(airflow)
 
     def set_airflow(self, airflow: int) -> None:
         self._fan.set_airflow(airflow)
